@@ -2,7 +2,7 @@
 
 Trabajo de Programación Orientada a Objetos — Universidad EIA (Go 1.21+, solo librería estándar).
 
-**Integrante:** _(escribe tu nombre aquí)_ — grupo de 1 estudiante.
+**Integrante:** _Samuel Tabares Gil_ — grupo de 1 estudiante.
 
 ## Cómo correrlo
 
