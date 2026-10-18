@@ -12,7 +12,9 @@ El README. Lo corrí con `gofmt`, `go vet` y `go test` para comprobarlo.
 
 ## Prompts decisivos
 **1.** Le pedi una guia basica de go para entender el trabajo con el siguiente prompt "Dame una guia basica de go para entender el proyecto"
+
 **2.** Mande el archivo del trabajo y le pedi que me lo desglosara para entender todo como si fuera un diagrama de flujo.
+
 **3.** Tuve problemas para descargar la extension oficial desde Go y habia instalado una que no era, asi que tuve que mandarle ss de lo que habia descargado y buscar el link oficial de implementacion de la extension a Visual Studio Code.
 
 ## Casos donde el código generado estaba mal o no era idiomático
