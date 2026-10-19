@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hospital de los Costeños con Narcolepsia</title>
+<style>
+  :root {
+    --bg: #f3f6f9; --card: #ffffff; --text: #1f2933; --muted: #6b7785; --line: #e1e6eb;
+    --green: #2e9e5b; --red: #d64545; --blue: #2f6fdb; --amber: #d98e04; --purple: #7b4fd6;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; background: var(--bg); color: var(--text); }
+  header { background: #0f5c6e; color: #fff; padding: 16px 24px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+  header h1 { margin: 0; font-size: 1.3rem; }
+  header .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  header label { font-size: .9rem; }
+  select, button { font: inherit; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--line); }
+  button { cursor: pointer; background: #fff; }
+  button:hover { filter: brightness(.95); }
+  button.sleep  { background: #efe9ff; border-color: var(--purple); color: var(--purple); }
+  button.assign { background: #e6f6ec; border-color: var(--green);  color: var(--green); }
+  button.wake   { background: #fff4d6; border-color: var(--amber);  color: #8a5a00; }
+  button.reset  { background: #fde8e8; border-color: var(--red);    color: var(--red); }
+  main { max-width: 1100px; margin: 0 auto; padding: 16px; display: grid; gap: 16px; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  section h2 { margin: 0 0 10px; font-size: 1.05rem; }
+  .tag { font-size: .75rem; background: #e8eef5; color: #3b4a5a; border-radius: 10px; padding: 2px 8px; margin-left: 6px; font-weight: normal; }
+  #banner { padding: 10px 14px; border-radius: 8px; font-weight: 600; display: none; }
+  #banner.ok  { display: block; background: #e6f6ec; color: #1d6b3c; border: 1px solid var(--green); }
+  #banner.err { display: block; background: #fde8e8; color: #9b2c2c; border: 1px solid var(--red); }
+  .rooms { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+  .room { border: 2px solid var(--line); border-radius: 10px; padding: 12px; text-align: center; }
+  .room.Available { border-color: var(--green); background: #f1fbf5; }
+  .room.Occupied  { border-color: var(--red);   background: #fff3f3; }
+  .room .num { font-size: 1.4rem; font-weight: 700; }
+  .room .st  { font-size: .85rem; margin-top: 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; font-size: .8rem; text-transform: uppercase; }
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 10px; font-size: .8rem; font-weight: 600; color: #fff; }
+  .Mild { background: var(--green); } .Moderate { background: var(--amber); } .Severe { background: var(--red); }
+  .Awake { background: var(--blue); } .AsleepInHallway { background: var(--amber); } .AsleepInBed { background: var(--purple); }
+  .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  ul { margin: 0; padding-left: 18px; } li { margin: 3px 0; }
+  .muted { color: var(--muted); }
+  .doc { margin-bottom: 10px; }
+  .mono { font-family: Consolas, monospace; font-size: .88rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🏥 Hospital de los Costeños con Narcolepsia</h1>
+  <div class="controls">
+    <label for="loc">Lugar donde se duerme:</label>
+    <select id="loc">
+      <option>cafeteria</option>
+      <option>radiology queue</option>
+      <option>pharmacy line</option>
+      <option>hallway 2, second floor</option>
+      <option>emergency entrance</option>
+      <option>waiting room</option>
+    </select>
+    <button class="reset" onclick="resetAll()">↺ Reiniciar</button>
+  </div>
+</header>
+
+<main>
+  <div id="banner"></div>
+
+  <section>
+    <h2>Habitaciones <span class="tag">verde = disponible · rojo = ocupada</span></h2>
+    <div id="rooms" class="rooms"></div>
+  </section>
+
+  <section>
+    <h2>Pacientes</h2>
+    <table>
+      <thead><tr><th>ID</th><th>Nombre</th><th>Nivel</th><th>Estado</th><th>Lugar</th><th>Habitación</th><th>Doctor</th><th>Acciones</th></tr></thead>
+      <tbody id="patients"></tbody>
+    </table>
+  </section>
+
+  <div class="two">
+    <section>
+      <h2>Consulta 5.1 · Dormidos en pasillo <span class="tag">PatientsInHallway</span></h2>
+      <div id="hallway"></div>
+    </section>
+    <section>
+      <h2>Consulta 5.4 · Reporte de severidad <span class="tag">SevereReport</span></h2>
+      <div id="severe"></div>
+    </section>
+  </div>
+
+  <section>
+    <h2>Consulta 5.2 · Episodios por doctor <span class="tag">MyEpisodes</span></h2>
+    <div id="doctors"></div>
+  </section>
+
+  <section>
+    <h2>Historial del hospital <span class="tag">History</span></h2>
+    <div id="history"></div>
+  </section>
+</main>
+
+<script>
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function roomText(n) { return n > 0 ? 'habitación ' + n : 'sigue en el pasillo'; }
+
+function showMessage(ok, text) {
+  const b = document.getElementById('banner');
+  b.className = ok ? 'ok' : 'err';
+  b.textContent = (ok ? '✅ ' : '⚠️ ') + text;
+}
+
+async function post(url, body) {
+  try {
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body || {})
+    });
+    if (!r.ok) {
+      showMessage(false, await r.text());
+    } else {
+      const data = await r.json();
+      showMessage(data.ok, data.message);
+    }
+  } catch (e) {
+    showMessage(false, 'No se pudo conectar con el servidor');
+  }
+  await load();
+}
+
+function act(kind, id) {
+  if (kind === 'sleep')  post('/api/sleep',  { patient_id: id, location: document.getElementById('loc').value });
+  if (kind === 'wake')   post('/api/wake',   { patient_id: id });
+  if (kind === 'assign') post('/api/assign', { patient_id: id });
+}
+
+function resetAll() { post('/api/reset'); }
+
+function actionsFor(p) {
+  if (p.state === 'Awake')
+    return `<button class="sleep" onclick="act('sleep','${p.id}')">😴 Dormir</button>`;
+  if (p.state === 'AsleepInHallway')
+    return `<button class="assign" onclick="act('assign','${p.id}')">🛏️ Asignar cama</button> ` +
+           `<button class="wake" onclick="act('wake','${p.id}')">☀️ Despertar</button>`;
+  return `<button class="wake" onclick="act('wake','${p.id}')">☀️ Despertar</button>`;
+}
+
+function episodeLine(e) {
+  return `<span class="mono">${esc(e.time)}</span> ${esc(e.patient_id)} ${esc(e.patient_name)} · ${esc(e.location)} → ${roomText(e.room)}`;
+}
+
+function render(s) {
+  document.getElementById('rooms').innerHTML = s.rooms.map(r => `
+    <div class="room ${esc(r.state)}">
+      <div class="num">${r.number}</div>
+      <div class="st">${r.state === 'Available' ? 'Disponible' : 'Ocupada'} · cap. ${r.capacity}</div>
+      <div class="muted">${r.occupants.length ? esc(r.occupants.join(', ')) : '—'}</div>
+    </div>`).join('');
+
+  document.getElementById('patients').innerHTML = s.patients.map(p => `
+    <tr>
+      <td class="mono">${esc(p.id)}</td>
+      <td>${esc(p.name)}</td>
+      <td><span class="badge ${esc(p.level)}">${esc(p.level)}</span></td>
+      <td><span class="badge ${esc(p.state)}">${esc(p.state)}</span></td>
+      <td>${p.location ? esc(p.location) : '<span class="muted">—</span>'}</td>
+      <td>${p.room > 0 ? p.room : '<span class="muted">—</span>'}</td>
+      <td>${p.doctor ? esc(p.doctor) : '<span class="muted">—</span>'}</td>
+      <td>${actionsFor(p)}</td>
+    </tr>`).join('');
+
+  const byId = Object.fromEntries(s.patients.map(p => [p.id, p]));
+  document.getElementById('hallway').innerHTML = s.hallway.length
+    ? '<ul>' + s.hallway.map(id => `<li><b>${esc(id)}</b> ${esc(byId[id].name)} <span class="muted">(${esc(byId[id].location)})</span></li>`).join('') + '</ul>'
+    : '<span class="muted">(ninguno)</span>';
+
+  document.getElementById('severe').innerHTML = s.severe.length
+    ? '<ul>' + s.severe.map(x => `<li><b>${esc(x.id)}</b> ${esc(x.name)} · ${x.episodes} episodio(s) hoy</li>`).join('') + '</ul>'
+    : '<span class="muted">(sin pacientes Severe)</span>';
+
+  document.getElementById('doctors').innerHTML = s.doctors.map(d => `
+    <div class="doc">
+      <b>Dr. ${esc(d.name)}</b> <span class="muted">${esc(d.specialty)}</span>
+      ${d.episodes.length
+        ? '<ul>' + d.episodes.map(e => '<li>' + episodeLine(e) + '</li>').join('') + '</ul>'
+        : '<div class="muted">sin episodios</div>'}
+    </div>`).join('') +
+    '<div class="muted">El camillero no guarda episodios propios, pero sus atenciones sí aparecen en el historial.</div>';
+
+  document.getElementById('history').innerHTML = s.history.length
+    ? '<table><thead><tr><th>Episodio</th><th>Hora</th><th>Paciente</th><th>Atendió</th><th>Lugar</th><th>Destino</th></tr></thead><tbody>' +
+      s.history.map(e => `<tr><td class="mono">${esc(e.id)}</td><td class="mono">${esc(e.time)}</td><td>${esc(e.patient_id)} ${esc(e.patient_name)}</td><td>${esc(e.attender)}</td><td>${esc(e.location)}</td><td>${roomText(e.room)}</td></tr>`).join('') +
+      '</tbody></table>'
+    : '<span class="muted">Todavía no hay episodios. Pulsa "Dormir" en algún paciente.</span>';
+}
+
+async function load() {
+  try {
+    const r = await fetch('/api/state');
+    render(await r.json());
+  } catch (e) {
+    showMessage(false, 'No se pudo conectar con el servidor');
+  }
+}
+
+load();
+</script>
+</body>
+</html>

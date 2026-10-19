@@ -11,6 +11,7 @@ go run .          # corre el escenario de demostración
 go test ./...     # corre los tests
 gofmt -l .        # no debe imprimir nada
 go vet ./...      # no debe reportar nada
+go run ./cmd/web   # interfaz gráfica (bono): abre http://localhost:8080
 ```
 
 ## Estructura
